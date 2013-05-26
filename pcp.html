@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src='http://closure-library.googlecode.com/svn/trunk/closure/goog/base.js'></script>
+    <title>PCP solver</title>
+  </head>
+
+  <body>
+    <script>
+      goog.require('goog.iter');
+      goog.require('goog.array');
+    </script>
+    <script>
+    var getIndexCombinationsInceasingInLength = function(ntuplelen, isSolutionCb) {
+      for (var len=1; ; len++) {
+        var rng = goog.iter.toArray(goog.iter.range(ntuplelen));
+        var posses_this_len = goog.array.repeat(rng, len);
+
+        var pro = goog.iter.product.apply(this, posses_this_len);
+        try {
+            while(1) {
+                var next = pro.next();
+                var res = isSolutionCb(next);
+                if (res) return next;
+            }
+        } catch (e) {
+            if (e !== goog.iter.StopIteration) throw e;
+        }
+      }
+    };
+    function genIsSolution(series, limit, debug) {
+        return (function isSolution(comb) {
+            //console.log("Checking", comb);
+            var strings = series.map(function(serie) {
+                return comb.map(function(idx) { return serie[idx]; }).join("");
+            });
+            //console.log("corresponds to", strings);
+            if (debug) console.log(strings.join("\n"));
+            
+            if (comb.length > limit) throw new Error("No solution with length smaller than or equal " + limit + " elements, stopped searching.");
+            return strings.every(function(str) { return str === strings[0]; });
+        });
+    };
+    
+
+var prob = [["110","1","0"],["1","0","110"]];
+var sol = [
+  3, 2, 2, 3, 3, 1, 3, 2, 2, 2, 1, 3, 3, 3, 2, 1, 3, 2, 2, 1,
+  3, 2, 1, 3, 3, 2, 1, 3, 2, 3, 2, 2, 1, 3, 2, 1, 3, 3, 2, 2,
+  3, 3, 2, 1, 3, 2, 1, 1, 3, 3, 1, 1, 3, 2, 1, 1, 1, 1, 2, 2,
+  1, 1, 2, 2, 3, 1, 3, 3, 1, 2, 1, 1, 2, 1, 1
+].map(function(v){return v-1;}).reverse();
+//var prob = [["100","0","1"],["1","100","00"]];
+//var sol = [0,2,0,0,2,1,1];
+console.log(genIsSolution(prob, 75, true)(sol));
+
+
+    </script>
+    <style>
+    textarea { display:block; height: 10em; width: 100%;}
+    </style>
+    <h1>PCP</h1>
+    <fieldset>
+      <legend>In</legend>
+      <textarea id="in">a ab bba
+baa aa bb</textarea>
+      <button id="go">Go</button>
+    </fieldset>
+    <fieldset>
+      <legend>Out</legend>
+      <textarea id="out" readonly></textarea>
+    </fieldset>
+    <script>
+    document.getElementById("go").onclick = function() {
+        var inp = document.getElementById("in").value.trim().split("\n").map(function(v) { return v.trim().split(/\s+/); });
+        try {
+            document.getElementById("out").value += (getIndexCombinationsInceasingInLength(inp[0].length, genIsSolution(inp, 10))) + "\n";
+        } catch (e) {
+            document.getElementById("out").value += e.message + "\n";
+        }
+    };
+    </script>
+  </body>
+
+</html>
